@@ -110,7 +110,7 @@ function Clouder(params) {
 	var new_postX;
 	var new_postY;
 	var objs = [];
-	var test = false;//true = no animation
+	var test = true;//true = no animation
 	var adjust = false;//make all elemens align correctly
 
     function init() {
