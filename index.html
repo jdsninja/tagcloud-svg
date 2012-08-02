@@ -63,7 +63,7 @@
 				paths[i] = new Array();
 				for (j = 0; j < circles.length; j++) {
 					if (circles[i].id !== circles[j].id) {
-						paths[i] = stage.path('M10,20L30,40');
+						paths[i] = stage.path();
 						paths[i].attr("stroke-width", 0.2);
 						paths[i].attr("stroke", stokeColor);
 						paths[i].node.id = 'p_' + paths[i].id;
@@ -115,11 +115,10 @@
 		var circles = new Array();
 		function createCircles() {
 			console.log('Create Circles ======================');
-			var c;
 			for (i = 0; i < elems.length; i++) {
 				circles[i] = stage.circle(0, 0, 10);
-				circles[i].attr('stroke', 'orange');
 				circles[i].node.id = 'c_' + circles[i].id;
+				circles[i].attr('stroke', 'orange');
 			}
 		}
 
@@ -139,19 +138,28 @@
 		/**
 		 * Texts
 		 */
+		var textes = new Array();
 		function createTexts() {
-			var t;
+			console.log('Create Texts======================');
 			for (i = 0; i < elems.length; i++) {
-				t = stage.text();
-				t .node.id = 't_' + elems[i].text;
-				t.attr('text', elems[i].text);
+				textes[i] = stage.text();
+				textes[i].node.id = 't_' + textes[i].id;
+				textes[i].attr('text', elems[i].text);
 			}
-		}
 
-		function updateText(elem) {
-			var elemId = elem.text;
+		}
+		function updateText(o) {
+			console.log('Update Texts======================');
+			/*var elemId = elem.text;
 			$('#t_' + elemId).attr('x', elem.screenX);
-			$('#t_' + elemId).attr('y', elem.screenY);
+			$('#t_' + elemId).attr('y', elem.screenY);    */
+
+			var elm = stage.getById(o.id + 36);
+			console.log(elm);
+			elm.attrs.cx = o.screenX;
+			elm.attrs.cy = o.screenY;
+			elm.animate({x:elm.attrs.cx, y:elm.attrs.cy});
+			//$('#t_' + o.id).attr('d', 'M' + circleAposX + ' '  + circleAposY + ' L' + circleBposX + ' ' + circleBposY);
 		}
 
 		/**
@@ -169,7 +177,7 @@
 			createTags();
 			createCircles();
 			createPaths();
-			//createTexts();
+			createTexts();
 			init();
 		});
 	</script>

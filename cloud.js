@@ -270,6 +270,7 @@ function Clouder(params) {
 
 			//updateText(o);
 			updateCircle(o);
+			updateText(o);
         });
 		udpatePaths();
     } // draw
