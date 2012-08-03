@@ -1,13 +1,14 @@
+<!DOCTYPE html>
 <html>
 <head>
 	<script type="text/javascript" src="jquery-1.7.2.min.js"></script>
 	<script type="text/javascript" src="raphael-min.js"></script>
-	<script src="./cloud.js"></script>
 	<style type="text/css">
 		body {
 			padding: 0;
 			margin: 0;
-			background:url('img/bg.jpg') 0 0 black no-repeat
+			/*background:url('img/bg.jpg') 0 0 black no-repeat;*/
+			background-color:#000;
 		}
 		#stage{}
 	</style>
@@ -17,34 +18,85 @@
 			stageX = 0,
 			stageY = 0,
 			circleRadius = 15;
+			stage = '',
+			interval = 1000,
+			stokeColor = '#ffed00'; //real color
+			easing = 'linear'; //real color
 
-		//var stokeColor = '#ffed00';
-		var stokeColor = 'red';
-
-		function init() {
-			var w = document.body.clientWidth, h = document.body.clientHeight;
-			var clouder = document.getElementById('cloud');
-			clouder.style.width = stageWidth;
-			clouder.style.height = stageHeight;
-			clouder.style.position = "absolute";
-			clouder.style.left = stageX;
-			clouder.style.top = stageY;
-			clouder.style.border = "1px solid #999";
-			window.clouder = new Clouder({
-				container:cloud,
-				tags:circles
-			});
-		} // init
-		var elems = [];
+		var elems = new Array();
 		function createTags() {
-			elems.push({text:"Montreal", id:"1", weight:1, top:146, left:572});
-			elems.push({text:"Quebec", id:"2", weight:1, left:493, top:294});
-			elems.push({text:"Sherbrook", id:"3", weight:1, left:195, top:293});
-			elems.push({text:"Laval", id:"4", weight:1, left:254, top:418});
-			elems.push({text:"Longueuil", id:"5", weight:1, left:549, top:317});
-			elems.push({text:"test", id:"6", weight:1, left:300, top:300});
+			elems.push({text:"Montreal", x:572, y:146});
+			elems.push({text:"Quebec", x:493, y:294});
+			elems.push({text:"Sherbrook", x:195, y:293});
+			elems.push({text:"Laval", x:254, y:418});
+			elems.push({text:"Longueuil", x:549, y:317});
 			return elems;
-		} // createTa
+		}
+
+		/*
+		 * Circles
+		 */
+		var circles = new Array();
+		function createCircles() {
+			for (i = 0; i < elems.length; i++) {
+				circles[i] = stage.circle(elems[i].x, elems[i].y, circleRadius);
+				circles[i].x = elems[i].x;
+				circles[i].y = elems[i].y;
+				circles[i].ok = false;
+				circles[i].attr({
+					stroke: stokeColor,
+					opacity: 0.2
+				});
+			}
+		}
+
+		function updateCircle(i, newX, newY){
+			var e,
+				randomNumber,
+				randomNumber2,
+				newX,
+				newY,
+				minX,
+				minY,
+				maxX,
+				maxY;
+
+			e = circles[i];
+
+			minX = elems[i].x + 10;
+			minY = elems[i].x - 10;
+			maxX = elems[i].y + 10;
+			maxY = elems[i].y - 10;
+
+			randomNumber = Math.floor(Math.random() * 11);
+			randomNumber2 = Math.floor(Math.random() * 2);
+
+			if(randomNumber2 === 0){
+				newX  = e.x + randomNumber;
+				newY  = e.y - randomNumber;
+			}else{
+				newX  = e.x - randomNumber;
+				newY  = e.y + randomNumber;
+			}
+
+			if(newX < minX){
+				newX = newX + 10;
+			}else if(newX > maxX){
+				newX = newX - 10;
+			}
+
+			if(newY < minY){
+				newY = newY + 10;
+			}else if(newY > maxY){
+				newY = newY - 10;
+			}
+
+			e.x = newX;
+			e.y = newY;
+
+			e = stage.getById(i);
+			e.animate({cx:newX, cy: newY}, interval, easing);
+		}
 
 		/**
 		 * Paths
@@ -52,99 +104,37 @@
 		// Create path
 		var paths = new Array();
 		function createPaths() {
-			console.log('Create Paths ======================');
-			for (i = 0; i < circles.length; i++) {
-				paths[i] = new Array();
-				for (j = 0; j < circles.length; j++) {
-					if (circles[i].id !== circles[j].id) {
-						paths[i] = stage.path("M"+elems[i].left+" "+elems[i].top+"L"+elems[j].left+" "+elems[j].top);
-						paths[i].attr("stroke-width", 0.3);
-						//paths[i].attr("opacity", 0.5);
-						paths[i].attr("opacity", 1);
-						paths[i].attr("stroke", stokeColor);
-						paths[i].node.id = 'p_' + paths[i].id;
-					}
+			//s = n * (n - 1) / 2
+			var elemsLength = elems.length;
+			var segments =  elemsLength * (elemsLength - 1) / 2;
+			var p = 0;
+			for (i = 0; i < elemsLength; i++) {
+				for (j = (i + 1); j < elemsLength; j++) {
+					paths[p] = stage.path('M' + circles[i].x + ' '  + circles[i].y + ' L' + circles[j].x + ' ' + circles[j].y);
+					paths[p].attr({
+						"opacity": 0.5,
+						"stroke": stokeColor,
+						"stroke-width": 0.3
+					});
+					p += 1;
 				}
 			}
 		}
 
 		// Update path coordinates
 		function updatePaths() {
-			console.log('Udpate Paths ======================');
-			var circleA,
-				circleB,
-				circleAposX,
-				circleAposY,
-				circleBposX,
-				circleBposY,
-				secondCircleId,
-				pathId,
-				path,
-				pathDestination;
-			for (i = 0; i < circles.length; i++) {
-				//console.log(i);
-				circleA = stage.getById(i);
-				circleAposX = circleA.attrs.cx;
-				circleAposY = circleA.attrs.cy;
-				secondCircleId = i;
-				for (j = i; j < (i + circles.length - 1); j++) {
-					//circle
-				   if(j == (circles.length -1)){
-					   secondCircleId = 0;
-				   }  else{
-					   secondCircleId++;
-				   }
-					circleB = stage.getById(secondCircleId);
-					circleBposX = circleB.attrs.cx;
-					circleBposY = circleB.attrs.cy;
-
-					//path
-					pathId = j + ((circles.length - 2) * i) + circles.length;
-					path = stage.getById(pathId);
-					//console.log(path);
-					//path.animate({rotation:100,cx:200,cy:200},1000,'<>');
-					//console.log(path);
-
-					pathDestination = 'M' + circleBposX + ' '  + circleBposY + ' L' + circleAposX + ' ' + circleAposY;
-
-					//$('#p_' + path.id).attr('d', 'M' + circleAposX + ' '  + circleAposY + ' L' + circleBposX + ' ' + circleBposY);
-					path.animate({path: pathDestination}, 3000, '<>');
+			var path,
+				pathDestination,
+				elemsLength = elems.length,
+				p = 0;
+			for (i = 0; i < elemsLength; i++) {
+				for (j = (i + 1); j < elemsLength; j++) {
+					pathDestination = 'M' + circles[i].x + ' '  + circles[i].y + ' L' + circles[j].x + ' ' + circles[j].y;
+					path = stage.getById(p + elemsLength);
+					path.animate({path: pathDestination, animation: 0}, interval, easing);
+					p += 1;
 				}
 			}
-		}
-
-		/*
-		* Circles
-		 */
-		var circles = new Array();
-		function createCircles() {
-			console.log('Create Circles ======================');
-			for (i = 0; i < elems.length; i++) {
-				circles[i] = stage.circle(elems[i].left, elems[i].top, circleRadius);
-				circles[i].node.id = 'c_' + circles[i].id;
-				circles[i].attr('stroke', stokeColor);
-				//circles[i].attr('opacity', 0.2);
-				circles[i].attr('opacity', 1);
-			}
-		}
-
-		function updateCircle(o){
-			console.log('Update Circle ======================');
-			var elm = stage.getById(o.id);
-			elm.attrs.cx = o.screenX;
-			elm.attrs.cy = o.screenY;
-			elm.animate({cx:o.screenX, cy:o.screenY}, 1000);
-			//console.log(elm.attrs.cx);
-			//$('#c_' + o.id).attr('cx', o.screenX);
-			//$('#c_' + o.id).attr('cY', o.screenY);
-			//udpatePaths(o);
-			//elm.glow({ color: "orange", width: 5, opacity:1, offsetx: o.screenX, offsety: o.screenY});
-
-			/*
-			elm.attrs.cx = elm.attrs.cx + 1;
-			elm.attrs.cy = elm.attrs.cy + 1;
-			elm.animate({cx:elm.attrs.cx, cy:elm.attrs.cy}, 1000);*/
-
 		}
 
 		/**
@@ -152,104 +142,51 @@
 		 */
 		var textes = new Array();
 		function createTexts() {
-			console.log('Create Texts======================');
-			for (i = 0; i < elems.length; i++) {
+			for (i = 0; i < circles.length; i++) {
 				textes[i] = stage.text();
-				textes[i].node.id = 't_' + textes[i].id;
-				textes[i].attr('text', elems[i].text);
+				textes[i].attr({
+					text: elems[i].text,
+					fill: "#fff",
+					x: elems[i].x,
+					y: elems[i].y
+				});
+
 			}
-
-		}
-		function updateText(o) {
-			console.log('Update Texts======================');
-			/*var elemId = elem.text;
-			$('#t_' + elemId).attr('x', elem.screenX);
-			$('#t_' + elemId).attr('y', elem.screenY);*/
-
-			var elm = stage.getById(o.id + 36);
-			console.log(elm);
-			elm.attrs.cx = o.screenX;
-			elm.attrs.cy = o.screenY;
-			elm.animate({x: elm.attrs.cx, y: elm.attrs.cy, ms: 1000});
-			//$('#t_' + o.id).attr('d', 'M' + circleAposX + ' '  + circleAposY + ' L' + circleBposX + ' ' + circleBposY);
 		}
 
-		/**
-		 * Update elements position
-		 */
-		function updateTagsPositions(elem) {
-			var elemId = elem.id - 1;
-			/*elems[elemId].x = elem.screenX;
-			elems[elemId].y = elem.screenY;   */
+		function updateTexts(i) {
+			var e;
+			for (i = 0; i < elems.length; i++) {
+				e = stage.getById(i + (circles.length + paths.length));
+				e.stop().animate({x:circles[i].x, y: circles[i].y}, interval, easing);
+			}
 		}
-
 
 		/**
 		 * Animate circle, text and path
 		 */
 		function animateStructure(){
-			var o = {id:''};
-			var el,
-				randomNumber,
-				randomNumber2,
-				newY,
-				newX;
 			for (i = 0; i < circles.length; i++) {
-				randomNumber = Math.floor(Math.random()*11);
-				randomNumber2 = Math.floor(Math.random()*2);
-				//o.id = i;
-				//o.screenX = elm.attrs.cx + 1;
-				//o.screenY = elm.attrs.cy + 1;
-
-				//updateCircle(o);
-				//
-				//var elm = stage.getById(i);
-				//console.log(elm.attrs.cx);
-				/*elm.attrs.cx = elm.attrs.cx + 1;
-				elm.attrs.cy = elm.attrs.cy + 1;
-				elm.animate({cx:elm.attrs.cx, cy:elm.attrs.cy}, 1000);      */
-
-
-				//console.log(circles[i]);
-				//updateText(o);
-				/*var elm = stage.getById(circles[i].id);
-				elm.attrs.cx = o.screenX;
-				elm.attrs.cy = o.screenY;
-				elm.animate({cx:i, cy:elm.attrs.cy});   */
-
-				el = circles[i];
-				if(randomNumber2 === 0){
-					newX  = el.attrs.cx + randomNumber;
-					newY  = el.attrs.cy - randomNumber;
-				}else{
-					newX  = el.attrs.cx - randomNumber;
-					newY  = el.attrs.cy + randomNumber;
-				}
-				//
-				el.stop().animate({cx:newX, cy: newY}, 2000, '<>', function(){
-					animateStructure();
-				});
+				updateCircle(i);
 			}
+			updateTexts();
 			updatePaths();
 		}
-		var stage;
+
+		/**
+		 * Init
+		 */
 		$(function () {
-			//elm.attrs.cx = o.screenX;
 			stage = Raphael(stageX, stageY, stageWidth, stageHeight);
 			createTags();
 			createCircles();
 			createPaths();
 			createTexts();
-			//init();
-
-			var interval = 50;
-			animateStructure();
-			//timer = setInterval(animateStructure, interval);
+			setInterval(animateStructure, interval);
 		});
 	</script>
 </head>
 <body>
-	<div id="cloud"></div>
 </body>
 </html>
 
